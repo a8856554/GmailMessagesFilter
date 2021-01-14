@@ -2,14 +2,16 @@ const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
 const {promisify} = require('util');
-
+const { resolve } = require('path');
+const readFileAsync = promisify(fs.readFile);
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/gmail.send'];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
-let filtering_word = ['石龍尾','穀精'];
+const LAST_SEARCH_TIME_PATH = 'last_search_time.json';
+let filtering_word = ['石龍尾','穀精','蝴蝶'];
 let Messages_array = [];
 // Load client secrets from a local file.
 fs.readFile('credentials.json', (err, content) => {
@@ -37,7 +39,7 @@ function authorize(credentials, callback) {
     oAuth2Client.setCredentials(JSON.parse(token));
     //callback(oAuth2Client);
 
-    listMessages(oAuth2Client, 'label:INBOX subject:水草 newer_than:1d ', filtering_word)
+    listMessages(oAuth2Client, 'label:INBOX subject:水草 ', filtering_word)
     .then(
         function (fulfilled) {
             /*
@@ -119,33 +121,37 @@ function listLabels(auth) {
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  * @param {string} query Gmail Search Query.
  */
-function listMessages(auth, query) {  
+async function listMessages(auth, query) {  
     let init_ts = Date.now();
     return new Promise((resolve, reject) => {    
-        const gmail = google.gmail({version: 'v1', auth});    
 
+        resolve(readLastSearchTime());
+
+    })//call gmail.users.messages.list() to get array of mail ids.
+    .then(function (the_last_search_time) {
+        const gmail = google.gmail({version: 'v1', auth});    
         let keywords_query = `{ ${filtering_word.join(' ')} }`;
-        console.log(`${keywords_query} ${query}`);
-        gmail.users.messages.list(      
+
+        //turn ms to s.
+        the_last_search_time = Math.round(the_last_search_time/ 1000);
+        console.log(`after:${the_last_search_time } ${keywords_query} ${query}`);
+
+        return gmail.users.messages.list(      
             {        
                 userId: 'me',        
-                q: `${keywords_query} ${query}`,      
-            },  
-            (err, res) => {        
-                if (err) {                    
-                    reject(err);          
-                    return;        
-                }        
-                if (!res.data.messages) { 
-                    resolve([]);          
-                    return;        
-                 }                
-                resolve(res.data.messages);     
-            }    
-        );  
-
-    })
-    .then(
+                q: `after:${the_last_search_time} ${keywords_query} ${query}`,      
+            })
+            .then(function (response){
+                if (!response.data.messages) {           
+                    return[];        
+                }                
+                return response.data.messages; 
+            })
+            .catch(function (error) {
+                console.log('gmail.users.messages.list() returned an error: ' + error.message)
+            });;  
+     })
+    .then(//print array of mail ids.
         function (fulfilled) {
         console.log(`listMessages() lists ${fulfilled.length} mails.`);
         console.log(fulfilled);
@@ -173,13 +179,14 @@ function listMessages(auth, query) {
                 +`${completed_ts % 1000}`
             );
             console.log('listMessages() used ' + Math.abs(completed_ts - init_ts) + ' ms.');
+            storeSearchTime(Date.now());
             return fulfilled;
         }
         
-    )
-    .catch(function (error) {
-        console.log('listMessages() returned an error: ' + error.message);
+    ).catch(function (error) {
+        console.log('listMessages returned an error: ' + error.message)
     });
+    
 }
 /**
  * Get the emails which has specific id, and store emails in Messages_array.
@@ -241,7 +248,7 @@ function getMessages(auth, messageId){
  * @param {string} subject Title of the email . 
  * @param {string} from Sender's email address.
  * @param {string} to Receiver's email address. 
- * @param {context} context Context of the email. 
+ * @param {string} context Context of the email. 
  */
 // TODO : function sendEmail needs to be promisified.
 async function sendEmail(auth, subject, from, to, context){
@@ -281,4 +288,30 @@ async function sendEmail(auth, subject, from, to, context){
     });
     console.log(res.data);
     return res.data;
+}
+/**
+ * Store the time that we search keywords.
+ *
+ * @param {number} time //The time we search keywords in ms. 
+ */
+function storeSearchTime(time){
+    fs.writeFile(LAST_SEARCH_TIME_PATH, JSON.stringify({last_search_time : time}), (err) => {
+        if (err) return console.error(err);
+        console.log('time is stored to', LAST_SEARCH_TIME_PATH);
+    });
+}
+/**
+ * Read the time that we search keywords last time.
+ */
+async function readLastSearchTime(){
+    return readFileAsync(LAST_SEARCH_TIME_PATH)
+    .then(function (fulfilled){
+        let time = JSON.parse(fulfilled).last_search_time;
+        return time;
+    })
+    .catch(function (error) {
+        console.log('readLastSearchTime() returned an error: ' + error.message)
+    });
+   
+    
 }
