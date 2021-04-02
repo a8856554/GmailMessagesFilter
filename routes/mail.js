@@ -7,6 +7,9 @@ const {google} = require('googleapis');
 const {promisify} = require('util');
 const { resolve } = require('path');
 const readFileAsync = promisify(fs.readFile);
+
+const mailModel = require('../model/mailModel.js');
+const authorizeModel = require('../model/authorizeModel.js');
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/gmail.send'];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -19,92 +22,47 @@ let Messages_array = [];
 
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  // Load client secrets from a local file.
-    fs.readFile('./resources/credentials.json', (err, content) => {
-        if (err) return console.log('Error loading client secret file:', err);
-        // Authorize a client with credentials, then call the Gmail API.
-        authorize(JSON.parse(content), listLabels);
-    
+router.get('/', async function(req, res, next) {
+
+    // Load client secrets from a local file.
+    // Use authorizeModel.authorize() to get a token.
+    let gettingNewToken = false;
+    const oAuth2Client = 
+    await readFileAsync('./resources/credentials.json')
+    .then(function (content){
+        return authorizeModel.authorize(JSON.parse(content), listLabels);  
+    })
+    .catch(function (error) {
+        gettingNewToken = true;
+        return console.log('mail router is getting a new token.' + error);
     });
+
+    if(!gettingNewToken){
+        //list messages we concern then send a email.
+        listMessages(oAuth2Client, 'label:INBOX subject:水草 ', filtering_word)
+        .then(
+            function (fulfilled) {
+                if(Messages_array.length > 0)
+                    sendEmail(oAuth2Client, 'Gmail Filter notifications', 'hsnuwindband52@gmail.com','hsnuwindband52@gmail.com',Messages_array);
+                else
+                    console.log('No mail you needs.');
+            }
+        )
+        .then(
+            function (fulfilled) {
+              //remove messages
+              Messages_array = [];
+            }
+        )
+        .catch(function (error) {
+            return console.log(err);
+        });
+    }
+    
     res.send('mail');
 });
 
 module.exports = router;
-
-
-
-/**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
- * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
- */
-// TODO : function authorize needs to be promisified.
-function authorize(credentials, callback) {
-  const {client_secret, client_id, redirect_uris} = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(
-      client_id, client_secret, redirect_uris[0]);
-
-  // Check if we have previously stored a token.
-  fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getNewToken(oAuth2Client, callback);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    //callback(oAuth2Client);
-
-    listMessages(oAuth2Client, 'label:INBOX subject:水草 ', filtering_word)
-    .then(
-        function (fulfilled) {
-            if(Messages_array.length > 0)
-                sendEmail(oAuth2Client, 'Gmail Filter notifications', 'hsnuwindband52@gmail.com','hsnuwindband52@gmail.com',Messages_array);
-            else
-                console.log('No mail you needs.');
-        }
-    )
-    .then(
-        function (fulfilled) {
-            //remove messages
-            Messages_array = [];
-        }
-    )
-    .catch(function (error) {
-        console.log( error.message);
-    });
-    
-    
-  });
-}
-
-/**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback for the authorized client.
- */
-function getNewToken(oAuth2Client, callback) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  rl.question('Enter the code from that page here: ', (code) => {
-    rl.close();
-    oAuth2Client.getToken(code, (err, token) => {
-      if (err) return console.error('Error retrieving access token', err);
-      oAuth2Client.setCredentials(token);
-      // Store the token to disk for later program executions
-      fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-        if (err) return console.error(err);
-        console.log('Token stored to', TOKEN_PATH);
-      });
-      callback(oAuth2Client);
-    });
-  });
-}
 
 /**
  * Lists the labels in the user's account.
@@ -163,7 +121,7 @@ async function listMessages(auth, query) {
             })
             .catch(function (error) {
                 console.log('gmail.users.messages.list() returned an error: ' + error.message)
-            });;  
+            });
      })
     .then(//print array of mail ids.
         function (fulfilled) {
@@ -193,7 +151,7 @@ async function listMessages(auth, query) {
                 +`${completed_ts % 1000}`
             );
             console.log('listMessages() used ' + Math.abs(completed_ts - init_ts) + ' ms.');
-            storeSearchTime(Date.now());//- 86400000
+            storeSearchTime(Date.now() - 86400000*2);//- 86400000
             return fulfilled;
         }
         
