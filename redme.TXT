@@ -1,0 +1,7 @@
+使用source ./env.sh設定環境變數
+NODE_ENV 
+PG_HOSTNAME 
+PG_PORT 
+PG_USERNAME 
+PG_DB_NAME 
+

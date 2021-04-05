@@ -2,10 +2,8 @@ var express = require('express');
 var router = express.Router();
 
 const fs = require('fs');
-const readline = require('readline');
 const {google} = require('googleapis');
 const {promisify} = require('util');
-const { resolve } = require('path');
 const readFileAsync = promisify(fs.readFile);
 
 const gmailModel = require('../model/gmailModel.js');
@@ -54,7 +52,7 @@ router.get('/', async function(req, res, next) {
             }
         )
         .catch(function (error) {
-            return console.log(err);
+            return console.log(error);
         });
     }
     
