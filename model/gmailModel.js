@@ -32,6 +32,7 @@ module.exports = {
         const gmail = google.gmail({version: 'v1', auth});    
         let keywords_query = `{ ${filtering_word.join(' ')} }`;
 
+
         //turn ms to s.
         the_last_search_time = Math.round(the_last_search_time/ 1000);
         console.log(`after:${the_last_search_time } ${keywords_query} ${query}`);
@@ -133,9 +134,11 @@ function getMessages(auth, messageId){
         if(searching_position > -1){
             let massage = 
                 {
-                    'word': word_label,
-                    'context':decode_data,
-                    'internalDate': fulfilled.data.internalDate // the time the message was originally accepted by Google
+                    'accountName' : 'Peko',
+                    'text':decode_data,
+                    //'text':'我愛夏色馬自立',
+                    'keyWords': word_label,
+                    'ts': fulfilled.data.internalDate // the time the message was originally accepted by Google
                 };
                 //console.log(ts2date(massage.internalDate));
             //Store the message we need .
@@ -163,9 +166,9 @@ async function sendEmail(auth, subject, from, to, context){
     let notifications = [];
 
     for(let i = 0; i < context.length; i++){
-        notifications.push(`<font color="blue"> Key word : ${context[i].word.replace(/\r\n/g,'<br>')}</font><br>`);
-        notifications.push(`<font color="blue"> ${ts2date(context[i].internalDate)} </font><br>`);
-        notifications.push(context[i].context.replace(/\r\n/g,'<br>') + '<br>');
+        notifications.push(`<font color="blue"> Key word : ${context[i].keyWords.replace(/\r\n/g,'<br>')}</font><br>`);
+        notifications.push(`<font color="blue"> ${ts2date(context[i].ts)} </font><br>`);
+        notifications.push(context[i].text.replace(/\r\n/g,'<br>') + '<br>');
     }
     
     let messageParts = [

@@ -7,8 +7,9 @@ var logger = require('morgan');
 
 var indexRouter = require('../routes/index');
 var usersRouter = require('../routes/users');
-var mailRouter = require('../routes/mail');
+var gmailRouter = require('../routes/gmail');
 var testRouter = require('../routes/test');
+var mailRouter = require('../routes/mail');
 
 const corsOptions = {
     origin: [
@@ -33,6 +34,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/gmail', gmailRouter);
 app.use('/mail', mailRouter);
 app.use('/test', testRouter);
 

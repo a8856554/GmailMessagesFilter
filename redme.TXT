@@ -5,3 +5,16 @@ PG_PORT
 PG_USERNAME 
 PG_DB_NAME 
 
+SET CLIENT_ENCODING TO 'utf8';
+cmd //C "chcp 65001"
+
+cmd //C "SET PGCLIENTENCODING=utf-8"
+=========================================
+在windows10遇到無法顯示utf8的情況：
+The steps are:
+
+open the cmd
+SET PGCLIENTENCODING=utf-8
+chcp 65001
+psql -h your.ip.addr.ess -U postgres
+=========================================

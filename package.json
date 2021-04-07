@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./src/server.js",
     "config": "node ./config.js",
-    "schema": "node ./model/schema.js"
+    "schema": "node ./model/schema.js",
+    "test": "node ./model/test.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",

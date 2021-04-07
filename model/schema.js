@@ -27,13 +27,14 @@ const dataSql = `
     SELECT
         'test1',
         'hello, this is an email.',
-        'peko',
+        '兔田佩可拉',
         round(extract(epoch from now()) + (i - 10) * 3600.0)
     FROM generate_series(1, 10) AS s(i);
 `;
 
 db.none(schemaSql).then(() => {
     console.log('Schema created');
+    console.log(`process.env.DB_URL is ${process.env.DB_URL}`);
     db.none(dataSql).then(() => {
         console.log('Data populated');
         pgp.end();
@@ -41,3 +42,4 @@ db.none(schemaSql).then(() => {
 }).catch(err => {
     console.log('Error creating schema', err);
 });
+
