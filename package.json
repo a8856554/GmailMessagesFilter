@@ -6,7 +6,9 @@
     "start": "node ./src/server.js",
     "config": "node ./config.js",
     "schema": "node ./model/schema.js",
-    "test": "node ./model/test.js"
+    "test": "node ./model/test.js",
+    "sequelize": "node ./middleware/sequelize/models/index.js",
+    "register": "node ./model/registerModel.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -16,7 +18,10 @@
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
+    "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
     "pg-promise": "^10.10.1",
-    "pug": "2.0.0-beta11"
+    "pug": "2.0.0-beta11",
+    "sequelize": "^6.6.2"
   }
 }

@@ -18,3 +18,7 @@ SET PGCLIENTENCODING=utf-8
 chcp 65001
 psql -h your.ip.addr.ess -U postgres
 =========================================
+發生一下情況
+gmail.users.messages.list() returned an error: invalid_grant
+
+將使用者的token刪掉重新用google api獲取

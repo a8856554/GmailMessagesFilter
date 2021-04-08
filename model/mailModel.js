@@ -1,7 +1,8 @@
-require('../config.js');
+//require('../config.js');
 const pgp = require('pg-promise')();
 if (!global.db) {
     db = pgp(process.env.DB_URL);
+    console.log('get db url again...');
 }
 module.exports = {
     create,
