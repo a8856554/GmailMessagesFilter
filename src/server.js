@@ -11,6 +11,8 @@ var usersRouter = require('../routes/users');
 var gmailRouter = require('../routes/gmail');
 var testRouter = require('../routes/test');
 var mailRouter = require('../routes/mail');
+var registerRouter = require('../routes/register');
+var loginRouter = require('../routes/login');
 
 const corsOptions = {
     origin: [
@@ -38,7 +40,8 @@ app.use('/users', usersRouter);
 app.use('/gmail', gmailRouter);
 app.use('/mail', mailRouter);
 app.use('/test', testRouter);
-
+app.use('/register', registerRouter);
+app.use('/login', loginRouter);
 
 app.use(cors(corsOptions));
 

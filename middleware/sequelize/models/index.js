@@ -16,7 +16,7 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 */
-//let sequelize = new Sequelize('postgres://postgres:a32156@localhost:5432/gmaildb');
+
 console.log("process.env.DB_URL is " + process.env.DB_URL);
 let sequelize = new Sequelize(process.env.DB_URL);
 fs

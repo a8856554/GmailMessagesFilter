@@ -45,6 +45,6 @@ function list(searchWords){
         FROM mails
         ${where.length ? 'WHERE ' + where : ''}
     ;`;
-    console.log(sql);
+    //console.log(sql);
     return db.any(sql, searchWords);
 }
