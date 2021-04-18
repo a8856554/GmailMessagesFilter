@@ -20,7 +20,7 @@ let filtering_word = ['石龍尾','穀精','蝴蝶'];
 
 
 
-/* GET users listing. */
+/* GET mails listing. */
 router.get('/', async function(req, res, next) {
 
     // Load client secrets from a local file.

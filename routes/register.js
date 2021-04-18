@@ -1,8 +1,6 @@
 let express = require('express');
 let router = express.Router();
-let registerModel = require('../model/registerModel.js');
-
-
+let usersModel = require('../model/usersModel.js');
 
 router.post('/', function(req, res, next) {
     const {userName, password} = req.body;
@@ -11,7 +9,7 @@ router.post('/', function(req, res, next) {
         err.status = 400;
         throw err;
     }
-    registerModel.create(userName, password)
+    usersModel.create(userName, password)
     .then(post => {
         //res.json(post);
         res.send('register successfully.');

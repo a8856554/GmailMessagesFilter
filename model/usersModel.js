@@ -1,8 +1,10 @@
+require('../config.js');
 const { Sequelize, DataTypes, Model } = require('sequelize');
 const sequelize = new Sequelize(process.env.DB_URL);
 module.exports = {
-  find,
-  init
+  create,
+  init,
+  find
 };
 let Users;
 init().then((fulfilled)=>{ console.log('table "Users" is connected.');});
@@ -40,11 +42,21 @@ async function init(){
 /**
  * Create a user with his userName and password 
  *
+ * @param {string} userName User's name of the new user
+ * @param {string} password User's password of the new user
+ */
+async function create(userName, password){
+    Users.create({ userName: userName, password: password });
+}
+
+/**
+ * Create a user with his userName and password 
+ *
  * @param {string} userName User's name of the user
  */
-async function find(userName){
-    return Users.findOne({ where: { userName: userName } })
-            .catch(function (error) {
-                console.log('Users.findOne() occurs error：' + error.message);
-            });
+ async function find(userName){
+  return Users.findOne({ where: { userName: userName } })
+          .catch(function (error) {
+              console.log('Users.findOne() occurs error：' + error.message);
+          });
 }

@@ -9,11 +9,13 @@ var logger = require('morgan');
 var indexRouter = require('../routes/index');
 var usersRouter = require('../routes/users');
 var gmailRouter = require('../routes/gmail');
+var gmailAuthRouter = require('../routes/gmailAuth');
+var gmailAuthorizedRouter = require('../routes/gmailAuthorized');
 var testRouter = require('../routes/test');
 var mailRouter = require('../routes/mail');
 var registerRouter = require('../routes/register');
 var loginRouter = require('../routes/login');
-
+var tokenVerify = require('../middleware/tokenVerify');
 const corsOptions = {
     origin: [
         'http://localhost:3003',
@@ -38,11 +40,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/gmail', gmailRouter);
+app.use('/gmailAuthorized', gmailAuthorizedRouter);
+
 app.use('/mail', mailRouter);
-app.use('/test', testRouter);
+
 app.use('/register', registerRouter);
 app.use('/login', loginRouter);
 
+app.use(tokenVerify.tokenVerify);
+app.use('/test', testRouter);
+app.use('/gmailAuth', gmailAuthRouter);
 app.use(cors(corsOptions));
 
 const port = 3002;

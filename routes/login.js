@@ -1,7 +1,7 @@
 let express = require('express');
 let router = express.Router();
 let jwt = require('jsonwebtoken')
-let loginModel = require('../model/loginModel.js');
+let usersModel = require('../model/usersModel.js');
 
 router.post('/', function(req, res, next) {
     const {userName, password} = req.body;
@@ -10,7 +10,7 @@ router.post('/', function(req, res, next) {
         err.status = 400;
         throw err;
     }
-    loginModel.find(userName)
+    usersModel.find(userName)
     .then(user => {
         if(user.password != req.body.password){
             res.json({ success: false, message: 'Authenticate failed. Wrong password'})
