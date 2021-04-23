@@ -1,17 +1,18 @@
-require('../config.js');
 const { Sequelize, DataTypes, Model } = require('sequelize');
-const sequelize = new Sequelize(process.env.DB_URL);
+let model;
+const name = 'Users';
 module.exports = {
   create,
   init,
   find,
+  model,
+  name
 };
-let Users;
-init().then((fulfilled)=>{ console.log('table "Users" is connected.');});
 
-async function init(){
+
+function init( sequelize){
   
-    Users = sequelize.define('Users', {
+    model = sequelize.define('Users', {
         // Model attributes are defined here
         userName: {
             type: DataTypes.STRING,
@@ -34,12 +35,11 @@ async function init(){
         //let table name will be equal to the model name.
         freezeTableName: true
     });
-    
+    console.log('table "Users" is defined.');
     //This creates the table if it doesn't exist (and does nothing if it already exists).
     //User.sync({ force: true }) : creates the table, dropping it first if it already existed.
-    await Users.sync();
     
-    
+    return model;
 }
 
 /**
@@ -49,7 +49,7 @@ async function init(){
  * @param {string} password User's password of the new user
  */
 async function create(userName, password){
-    Users.create({ userName: userName, password: password });
+  model.create({ userName: userName, password: password });
 }
 
 /**
@@ -58,7 +58,7 @@ async function create(userName, password){
  * @param {string} userName User's name of the user
  */
  async function find(userName){
-  return Users.findOne({ where: { userName: userName } })
+  return model.findOne({ where: { userName: userName } })
           .catch(function (error) {
               console.log('Users.findOne() occurs error：' + error.message);
           });

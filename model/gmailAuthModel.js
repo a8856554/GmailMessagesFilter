@@ -1,3 +1,6 @@
+/**
+ * This model is web api with googleapi Auth2 version.
+ */
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
@@ -17,12 +20,7 @@ module.exports = {
     getToken
 };
 
-/**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
- * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
- */
+
 /*  TODO : 
     1.readFileAsync() should be modified to directly access token stored in db.
     2.  if(tokens.findOne){ 
@@ -42,7 +40,12 @@ module.exports = {
                 });
         }
 */
-
+/**
+ * Create an OAuth2 client with the given credentials.
+ * if token exists , than return a OAuth2Client which has been setCredentials(token).
+ * Else if token does not exist, return a OAuth2Client without token.
+ * @param {Object} credentials The authorization client credentials.
+ */
 async function authorize(credentials) {
     const {client_secret, client_id, redirect_uris} = credentials.web;
     const oAuth2Client = new google.auth.OAuth2(

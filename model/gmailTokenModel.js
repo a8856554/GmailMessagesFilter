@@ -1,32 +1,36 @@
-require('../config.js');
-const { Sequelize, DataTypes, Model } = require('sequelize');
+const { Sequelize, DataTypes, Model, Deferrable } = require('sequelize');
 const sequelize = new Sequelize(process.env.DB_URL);
+const usersModel = require('../model/usersModel.js');
 module.exports = {
   create,
   init,
   find,
 };
-let Users;
-init().then((fulfilled)=>{ console.log('table "Users" is connected.');});
+let GmailTokens;
+init().then((fulfilled)=>{ console.log('table "GmailTokens" is connected.');});
 
 async function init(){
-  
-    Users = sequelize.define('Users', {
-        // Model attributes are defined here
-        userName: {
+    GmailTokens = sequelize.define('GmailTokens', {
+        
+        access_token: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        },
+        refresh_token: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        },
+        scope: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        },
+        token_type: {
             type: DataTypes.STRING,
             allowNull: false
         },
-        password: {
-            type: DataTypes.STRING,
+        expiry_date: {
+            type: 'TIMESTAMP',
             allowNull: false
-        },
-        firstName: {
-          type: DataTypes.STRING
-        },
-        lastName: {
-          type: DataTypes.STRING
-          // allowNull defaults to true
         }
       }, {
         // Other model options go here
@@ -37,9 +41,7 @@ async function init(){
     
     //This creates the table if it doesn't exist (and does nothing if it already exists).
     //User.sync({ force: true }) : creates the table, dropping it first if it already existed.
-    await Users.sync();
-    
-    
+    await GmailTokens.sync();
 }
 
 /**
@@ -48,8 +50,8 @@ async function init(){
  * @param {string} userName User's name of the new user
  * @param {string} password User's password of the new user
  */
-async function create(userName, password){
-    Users.create({ userName: userName, password: password });
+ async function create(userName, password){
+    
 }
 
 /**
@@ -58,8 +60,5 @@ async function create(userName, password){
  * @param {string} userName User's name of the user
  */
  async function find(userName){
-  return Users.findOne({ where: { userName: userName } })
-          .catch(function (error) {
-              console.log('Users.findOne() occurs error：' + error.message);
-          });
+  
 }

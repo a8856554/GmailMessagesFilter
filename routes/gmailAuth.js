@@ -7,6 +7,7 @@ const {promisify} = require('util');
 const readFileAsync = promisify(fs.readFile);
 const gmailAuthModel = require('../model/gmailAuthModel.js');
 
+const usersModel = require('../model/usersModel.js');
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/gmail.send'];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -14,6 +15,8 @@ const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.go
 // time.
 const TOKEN_PATH = './resources/token_test.json';
 const LAST_SEARCH_TIME_PATH = './resources/last_search_time.json';
+
+const sequelizeDB  = require('../model/sequelize');
 
 
 /* GET authorization of user's gmail. */
@@ -79,6 +82,7 @@ router.get('/callback', async function(req, res, next) {
       }
     );
     
+
     console.log('The gmail api auth code is : ' + code);
     // Now that we have the code, use that to acquire tokens.
     const r = await gmailAuthModel.getToken(oAuth2Client , code);
@@ -86,7 +90,41 @@ router.get('/callback', async function(req, res, next) {
     oAuth2Client.setCredentials(r.tokens);
     console.log('The gmail api token is : ' + JSON.stringify(r.tokens));
 
-    res.send('Get gmail authorization successfully. token is : ' + JSON.stringify(r.tokens));
+    let userName = req.decoded.userName;
+
+    sequelizeDB["Users"].find(userName)
+    .then(
+      function(user){
+        return sequelizeDB["GmailTokens"].create(
+          r.tokens.access_token, 
+          r.tokens.refresh_token, 
+          r.tokens.scope, 
+          r.tokens.token_type, 
+          r.tokens.expiry_date, 
+          req.decoded.id
+        );
+      },
+      function(reason) {
+        //find no user
+        res.send('failed to find the user.');
+        return 'failed';
+      }
+    )
+    .then(
+      (tokenData) =>{
+        res.send('Get & store gmail authorization successfully. token is : ' 
+                  + JSON.stringify(r.tokens)
+                  + '\n'
+                  + JSON.stringify(tokenData)
+        );
+      }
+    )
+    .catch(function (error) {
+      console.log(error);
+      res.json({ success: false, message: 'failed to store the gmail Auth2 token into database.'})
+    });
+    
+    //res.send('Get gmail authorization successfully. token is : ' + JSON.stringify(r.tokens));
     
     
     
