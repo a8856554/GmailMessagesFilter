@@ -6,8 +6,8 @@ const {google} = require('googleapis');
 const {promisify} = require('util');
 const readFileAsync = promisify(fs.readFile);
 const gmailAuthModel = require('../model/gmailAuthModel.js');
+const gmailModel = require('../model/gmailModel.js');
 
-const usersModel = require('../model/usersModel.js');
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.googleapis.com/auth/gmail.send'];
 // The file token.json stores the user's access and refresh tokens, and is
@@ -15,13 +15,16 @@ const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.go
 // time.
 const TOKEN_PATH = './resources/token_test.json';
 const LAST_SEARCH_TIME_PATH = './resources/last_search_time.json';
+if (!global.sequelizeDB) {
+  sequelizeDB  = require('../model/sequelize');
+}
 
-const sequelizeDB  = require('../model/sequelize');
 
 
 /* GET authorization of user's gmail. */
 router.get('/', async function(req, res, next) {
-
+    filtering_word = ['蝴蝶','穀精','石龍尾'];
+    let userId = req.decoded.id;
     // Load client secrets from a local file.
     // Use authorizeModel.authorize() to get a token.
     let oAuth2Client = 
@@ -29,7 +32,7 @@ router.get('/', async function(req, res, next) {
     .then(
       //get gmail credentials and token successfully.
       function (content){
-        return gmailAuthModel.authorize(JSON.parse(content));  
+        return gmailAuthModel.authorize(JSON.parse(content), userId);  
       },
       // on rejection
       function(reason) {
@@ -41,8 +44,13 @@ router.get('/', async function(req, res, next) {
       function (client){
         //if client is a string means that we haven't got token yet
         //sent Auth URL to front-end to let User get a new token.
-        let authURL = gmailAuthModel.getNewToken(client);
-        res.send(authURL);
+        if(typeof(client) === 'string'){
+          res.send(client);
+        }
+
+        //if client is not a string, then we get a setup oAuth2Client
+        return client;
+        
       }
     )
     .catch(function (error) {
@@ -53,8 +61,44 @@ router.get('/', async function(req, res, next) {
           message: error
         })
     });
-    //get gmail credentials successfully, then get token
 
+    
+    //Check if the user id exist in db.
+    await sequelizeDB["Users"].model.findByPk(userId)
+    .then(
+      //list mails which contain filtering words.
+      function (content){
+        return gmailModel.listMessages(oAuth2Client, 'label:INBOX subject:水草 ', filtering_word);  
+      },
+      // on rejection
+      function(reason) {
+        res.send('Find no your user data in database.');
+        return 'failed';
+      }
+    )
+    .then(function (Messages) {
+      if(Messages.length > 0){
+        gmailModel.sendEmail(oAuth2Client, 
+          'Gmail Filter notifications', 
+          'hsnuwindband52@gmail.com',
+          'hsnuwindband52@gmail.com',
+        Messages);
+              /*
+        mailModel.create(Messages)
+        .then(function(response) { console.log(response)});*/
+        res.send('Successfully send mails.');
+      }
+      else
+        res.send('No mail you need.');
+  })
+  .catch(function (error) {
+      return console.log(error);
+  });
+    ;
+
+
+    
+    
 
 
     
@@ -71,9 +115,11 @@ router.get('/callback', async function(req, res, next) {
     let oAuth2Client = 
     await readFileAsync('./resources/web_credentials.json')
     .then(
-      //get gmail credentials and token successfully.
+      //get gmail credentials successfully.
       function (content){
-        return gmailAuthModel.authorize(JSON.parse(content));  
+        let credentials = JSON.parse(content);
+        const {client_secret, client_id, redirect_uris} = credentials.web;
+        return new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
       },
       // on rejection
       function(reason) {
@@ -88,12 +134,13 @@ router.get('/callback', async function(req, res, next) {
     const r = await gmailAuthModel.getToken(oAuth2Client , code);
     // Make sure to set the credentials on the OAuth2 client.
     oAuth2Client.setCredentials(r.tokens);
+
     console.log('The gmail api token is : ' + JSON.stringify(r.tokens));
 
     let userName = req.decoded.userName;
-
+    //Check if the user exist in db.
     sequelizeDB["Users"].find(userName)
-    .then(
+    .then(//find successfully then store the token to db.
       function(user){
         return sequelizeDB["GmailTokens"].create(
           r.tokens.access_token, 

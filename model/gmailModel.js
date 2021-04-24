@@ -134,11 +134,10 @@ function getMessages(auth, messageId){
         if(searching_position > -1){
             let massage = 
                 {
-                    'accountName' : 'Peko',
+                    'UserId' : 1,
                     'text':decode_data,
-                    //'text':'我愛夏色馬自立',
-                    'keyWords': word_label,
-                    'ts': fulfilled.data.internalDate // the time the message was originally accepted by Google
+                    'keyword': word_label,
+                    'intetnal_date': fulfilled.data.internalDate // the time the message was originally accepted by Google
                 };
                 //console.log(ts2date(massage.internalDate));
             //Store the message we need .
@@ -166,8 +165,8 @@ async function sendEmail(auth, subject, from, to, context){
     let notifications = [];
 
     for(let i = 0; i < context.length; i++){
-        notifications.push(`<font color="blue"> Key word : ${context[i].keyWords.replace(/\r\n/g,'<br>')}</font><br>`);
-        notifications.push(`<font color="blue"> ${ts2date(context[i].ts)} </font><br>`);
+        notifications.push(`<font color="blue"> Key word : ${context[i].keyword.replace(/\r\n/g,'<br>')}</font><br>`);
+        notifications.push(`<font color="blue"> ${ts2date(context[i].intetnal_date)} </font><br>`);
         notifications.push(context[i].text.replace(/\r\n/g,'<br>') + '<br>');
     }
     

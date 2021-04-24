@@ -68,10 +68,13 @@ async function create(access_token, refresh_token, scope, token_type, expiry_dat
 }
 
 /**
- * 
+ * find the token whose UserId === userId
  *
- * @param {string} userName User's name of the user
+ * @param {number} userId User's id 
  */
-async function find(userName){
-  
+ async function find(userId){
+    return model.findOne({ where: { UserId: userId } })
+    .catch(function (error) {
+        console.log('GmailTokens.findOne() occurs error：' + error.message);
+    });
 }

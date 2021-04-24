@@ -53,7 +53,7 @@ async function create(userName, password){
 }
 
 /**
- * Create a user with his userName and password 
+ * 
  *
  * @param {string} userName User's name of the user
  */

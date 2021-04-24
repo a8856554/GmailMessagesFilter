@@ -1,6 +1,6 @@
-//
-//This model is a localhost and commandline input version.
-//
+/**
+ * This model is a localhost and commandline input version.
+ */
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');

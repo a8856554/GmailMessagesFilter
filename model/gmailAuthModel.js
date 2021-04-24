@@ -12,8 +12,10 @@ const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly','https://www.go
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
-const TOKEN_PATH = './resources/token_web.json';
-
+const TOKEN_PATH = './resources/web_token.json';
+if (!global.sequelizeDB) {
+  sequelizeDB  = require('../model/sequelize');
+}
 module.exports = {
     authorize,
     getNewToken,
@@ -43,38 +45,60 @@ module.exports = {
 /**
  * Create an OAuth2 client with the given credentials.
  * if token exists , than return a OAuth2Client which has been setCredentials(token).
- * Else if token does not exist, return a OAuth2Client without token.
+ * Else if token does not exist, return a OAuth2 URL.
  * @param {Object} credentials The authorization client credentials.
+ * @param {number} userId the user's id in database.
  */
-async function authorize(credentials) {
+async function authorize(credentials, userId) {
     const {client_secret, client_id, redirect_uris} = credentials.web;
     const oAuth2Client = new google.auth.OAuth2(
         client_id, client_secret, redirect_uris[0]);
   
-    // Check if we have previously stored a token.
-    return readFileAsync(TOKEN_PATH)
-        .then(
-          function (token){
-            oAuth2Client.setCredentials(JSON.parse(token));
-            return oAuth2Client;
-          },
-          function(reason) {
-            //the oAuth2Client has not excuted setCredentials();
+    return sequelizeDB["GmailTokens"].find(userId)
+      .then(
+        async function (GmailTokens){
+          console.log("GmailTokens is " + GmailTokens);
+          if(GmailTokens === null || GmailTokens === undefined){
+            //if token doesn't exist, return a AuthUrl string.
+            let authUrl = oAuth2Client.generateAuthUrl({
+              access_type: 'offline',
+              scope: SCOPES,
+              //prompt: 'consent select_account'
+            });
+            return authUrl;
+          }
+          else{
+            
+            let token = {
+              access_token: GmailTokens.access_token,
+              refresh_token: GmailTokens.refresh_token,
+              scope: GmailTokens.scope,
+              token_type: GmailTokens.token_type,
+              expiry_date: parseInt(GmailTokens.expiry_date, 10)
+            };
+            oAuth2Client.setCredentials(token);
+            /*
+            let token = await readFileAsync(TOKEN_PATH);
+            
+            oAuth2Client.setCredentials(JSON.parse(token));*/
+            
+            console.log("toooooooooooooken is " + JSON.stringify(token));
+  
+            
             return oAuth2Client;
           }
-
-        )
-        .catch(function (error) {
-            console.log('Does not find gamil token error: ' + error);
-            throw error;
-        });
+      })
+      .catch(function (error) {
+          console.log('Does not find gamil token error: ' + error);
+          throw error;
+      });
 }
   
 /**
 * generate a new AuthUrl and return it.
 * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
+*
 */
-// TODO : function authorize needs to be promisified.
 function getNewToken(oAuth2Client) {
     const authUrl = oAuth2Client.generateAuthUrl({
       access_type: 'offline',
