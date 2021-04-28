@@ -12,7 +12,7 @@ module.exports = {
 
 function init(sequelize){
     model = sequelize.define('GmailTokens', {
-        
+        //foreign key userId will be created automatically in extraSetup.js
         access_token: {
             type: DataTypes.TEXT,
             allowNull: false

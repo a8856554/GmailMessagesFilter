@@ -7,7 +7,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('../routes/index');
-var usersRouter = require('../routes/users');
+var userRouter = require('../routes/user');
 var gmailRouter = require('../routes/gmail');
 var gmailAuthRouter = require('../routes/gmailAuth');
 var gmailAuthorizedRouter = require('../routes/gmailAuthorized');
@@ -38,7 +38,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/gmail', gmailRouter);
 app.use('/gmailAuthorized', gmailAuthorizedRouter);
 
@@ -50,6 +49,7 @@ app.use('/login', loginRouter);
 app.use(tokenVerify.tokenVerify);
 app.use('/test', testRouter);
 app.use('/gmailAuth', gmailAuthRouter);
+app.use('/user', userRouter);
 app.use(cors(corsOptions));
 
 const port = 3002;

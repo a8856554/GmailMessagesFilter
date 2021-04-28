@@ -9,7 +9,8 @@ let filtering_words = [];
 module.exports = {
     listMessages,
     getMessages,
-    sendEmail
+    sendEmail,
+    getProfile
 };
 
 
@@ -80,7 +81,7 @@ module.exports = {
                 +`${completed_ts % 1000}`
             );
             console.log('listMessages() used ' + Math.abs(completed_ts - init_ts) + ' ms.');
-            storeSearchTime(Date.now() - 86400000*2);//- 86400000
+            storeSearchTime(Date.now() - 86400000/2);//- 86400000
             return Messages_array ;
         }
         
@@ -134,7 +135,6 @@ function getMessages(auth, messageId){
         if(searching_position > -1){
             let massage = 
                 {
-                    'UserId' : 1,
                     'text':decode_data,
                     'keyword': word_label,
                     'intetnal_date': fulfilled.data.internalDate // the time the message was originally accepted by Google
@@ -170,6 +170,7 @@ async function sendEmail(auth, subject, from, to, context){
         notifications.push(context[i].text.replace(/\r\n/g,'<br>') + '<br>');
     }
     
+
     let messageParts = [
         `From: ${from}`,
         `To: ${to}`,
@@ -197,6 +198,59 @@ async function sendEmail(auth, subject, from, to, context){
     console.log(res.data);
     return res.data;
 }
+
+/**
+ * Gets the current user's Gmail profile.
+ * If successful, the response body contains data with the following structure:
+ * 
+ * {
+ * config: {
+ *   url: 'https://www.googleapis.com/gmail/v1/users/me/profile',
+ *   method: 'GET',
+ *   paramsSerializer: [Function],
+ *   headers: {
+ *     'Accept-Encoding': 'gzip',
+ *     'User-Agent': 'google-api-nodejs-client/0.7.2 (gzip)',
+ *     Authorization: 'Bearer ya29.a0AfH6SMAPncOXAndARTiM3YrLi8XdySMp9FE...',
+ *     Accept: 'application/json'
+ *   },
+ *   params: [Object: null prototype] {},
+ *   validateStatus: [Function],
+ *   responseType: 'json'
+ * },
+ * data: {
+ *   emailAddress: 'hsnuwindband52@gmail.com',
+ *   messagesTotal: 25561,
+ *   threadsTotal: 24225,
+ *   historyId: '1804102'
+ * },
+ * headers: {
+ *   'alt-svc': 'h3-29=":443"; ma=2592000,h3-T051=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"',
+ *   'cache-control': 'private',
+ *   connection: 'close',
+ *   'content-encoding': 'gzip',
+ *   'content-type': 'application/json; charset=UTF-8',
+ *   date: 'Sun, 25 Apr 2021 13:35:17 GMT',
+ *   server: 'ESF',
+ *   'transfer-encoding': 'chunked',
+ *   vary: 'Origin, X-Origin, Referer',
+ *   'x-content-type-options': 'nosniff',
+ *   'x-frame-options': 'SAMEORIGIN',
+ *   'x-xss-protection': '0'
+ * },
+ * status: 200,
+ * statusText: 'OK'
+ *} 
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ */
+async function getProfile(auth){
+    const gmail = google.gmail({version: 'v1', auth});
+    return gmail.users.getProfile({
+        auth: auth,
+        userId: 'me'
+        });
+}
+
 /**
  * Store the time that we search keywords.
  *

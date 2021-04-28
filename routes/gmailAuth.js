@@ -23,7 +23,7 @@ if (!global.sequelizeDB) {
 
 /* GET authorization of user's gmail. */
 router.get('/', async function(req, res, next) {
-    filtering_word = ['蝴蝶','穀精','石龍尾'];
+    filtering_word = ['蝴蝶','穀精','宮廷'];
     let userId = req.decoded.id;
     // Load client secrets from a local file.
     // Use authorizeModel.authorize() to get a token.
@@ -76,25 +76,32 @@ router.get('/', async function(req, res, next) {
         return 'failed';
       }
     )
-    .then(function (Messages) {
+    .then(async function (Messages) {
       if(Messages.length > 0){
+        //get the user's gmail address
+        let profile = await gmailModel.getProfile(oAuth2Client);
+        console.log('response is ' +  JSON.stringify(profile));
+
         gmailModel.sendEmail(oAuth2Client, 
           'Gmail Filter notifications', 
-          'hsnuwindband52@gmail.com',
-          'hsnuwindband52@gmail.com',
-        Messages);
-              /*
-        mailModel.create(Messages)
-        .then(function(response) { console.log(response)});*/
-        res.send('Successfully send mails.');
+          /*'hsnuwindband52@gmail.com',
+          'hsnuwindband52@gmail.com',*/
+          profile.data.emailAddress,
+          profile.data.emailAddress,
+          Messages
+        );
+       
+        sequelizeDB["UserMails"].create(Messages,userId);
+        res.send('Successfully send mails.');  
       }
       else
         res.send('No mail you need.');
-  })
-  .catch(function (error) {
+    })
+    
+    .catch(function (error) {
       return console.log(error);
-  });
-    ;
+    });
+
 
 
     

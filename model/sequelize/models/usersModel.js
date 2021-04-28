@@ -28,6 +28,10 @@ function init( sequelize){
         lastName: {
           type: DataTypes.STRING
           // allowNull defaults to true
+        },
+        email: {
+          type: DataTypes.STRING
+          // allowNull defaults to true
         }
       }, {
         // Other model options go here

@@ -16,7 +16,7 @@ function init( sequelize){
         // Model attributes are defined here
         //id and foreign key userId will be created automatically in extraSetup.js
         text: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
             allowNull: false
         },
         keyword: {
@@ -36,7 +36,7 @@ function init( sequelize){
     });
     console.log('table "UserMails" is defined.');
     //This creates the table if it doesn't exist (and does nothing if it already exists).
-    //User.sync({ force: true }) : creates the table, dropping it first if it already existed.
+    //model.sync({ force: true }) // creates the table, dropping it first if it already existed.
     
     return model;
 }
@@ -45,9 +45,18 @@ function init( sequelize){
  * Insert mail records in db.
  *
  * @param {Array} messages array of messages.
+ * @param {number}  UserId
  */
-async function create(messages){
-  model.bulkCreate(messages, {validate: true, fields: ["text", "keyword", "intetnal_date", "userId"]});
+async function create(messages, UserId){
+  let len = messages.length;
+  for(let i = 0; i < len; i = i+1)
+    messages[i].UserId = UserId;
+  //console.log(messages);
+
+  model.bulkCreate(messages, {validate: true, fields: ["text", "keyword", "intetnal_date", "UserId"]})
+  .catch(function (error) {
+    console.log('UserMailModel.create() returned an error: ' + error.message)
+  });
 }
 
 
