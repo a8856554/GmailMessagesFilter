@@ -5,6 +5,7 @@ module.exports = {
   create,
   init,
   find,
+  findAll,
   model,
   name
 };
@@ -76,5 +77,20 @@ async function create(access_token, refresh_token, scope, token_type, expiry_dat
     return model.findOne({ where: { UserId: userId } })
     .catch(function (error) {
         console.log('GmailTokens.findOne() occurs error：' + error.message);
+    });
+}
+
+
+/**
+ * find all tokens in table  "GmailTokens"
+ *
+ * 
+ */
+ async function findAll(){
+    return model.findAll({
+        attributes: ["access_token", "refresh_token", "scope", "token_type", "expiry_date", "UserId"]
+    })
+    .catch(function (error) {
+        console.log('GmailTokens.findAll() occurs error：' + error.message);
     });
 }

@@ -48,12 +48,16 @@ module.exports = {
  * Else if token does not exist, return a OAuth2 URL.
  * @param {Object} credentials The authorization client credentials.
  * @param {number} userId the user's id in database.
+ * @param {Object} token option: a json oAuth2 token object
  */
-async function authorize(credentials, userId) {
+async function authorize(credentials, userId, token = null) {
     const {client_secret, client_id, redirect_uris} = credentials.web;
     const oAuth2Client = new google.auth.OAuth2(
         client_id, client_secret, redirect_uris[0]);
-  
+    if(token !== null){
+      oAuth2Client.setCredentials(token);
+      return oAuth2Client;
+    }
     return sequelizeDB["GmailTokens"].find(userId)
       .then(
         async function (GmailTokens){

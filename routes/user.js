@@ -9,6 +9,7 @@ router.get('/', async function(req, res, next) {
   const userId = req.decoded.id;
   const user = await sequelizeDB["Users"].model.findByPk(userId);
   const user_routine = await sequelizeDB["RoutineNotifications"].find(userId);
+  //send as a json object
   res.send({ user_profile: user , routine_data: user_routine});
 });
 

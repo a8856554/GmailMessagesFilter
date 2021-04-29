@@ -1,13 +1,15 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 let model;
 const name = 'RoutineNotifications';
+const FILTERING_WORDS_NUM = 5;
 module.exports = {
   create,
   init,
   find,
   update,
   model,
-  name
+  name,
+  FILTERING_WORDS_NUM
 };
 
 
@@ -63,6 +65,13 @@ async function create(userId, time_interval = 900000, time_last_search = 9466560
      time_last_search: time_last_search,
      UserId: userId
   };
+  
+  if( filtering_words.length > FILTERING_WORDS_NUM ){
+      let pop_num = filtering_words.length - FILTERING_WORDS_NUM;
+      for(let i = 0; i < pop_num; i = i+1)
+        filtering_words.pop();
+  }
+    
   for(let i = 0; i < filtering_words.length; i = i+1)
     record[`filtering_word${i}`] = filtering_words[i];
 
@@ -74,14 +83,30 @@ async function create(userId, time_interval = 900000, time_last_search = 9466560
 
 /**
  * Find a record whose attribute "UserId" is equal to userId.
- *
+ *"routine_data": {
+        "id": 2,
+        "time_interval": "900000",
+        "time_last_search": "1619568475438",
+        "filtering_word0": "蝴蝶",
+        "filtering_word1": "宮廷",
+        "filtering_word2": "穀精",
+        "filtering_word3": "石龍尾",
+        "filtering_word4": null,
+        "createdAt": "2021-04-28T13:56:34.800Z",
+        "updatedAt": "2021-04-28T13:56:34.800Z",
+        "UserId": 1
+    }
  * @param {number} userId User's id in "Users" table.
  */
 async function find(userId){
-    return model.findOne({ where: { UserId: userId } })
-            .catch(function (error) {
-                console.log('routineNotificationModel.findOne() occurs error：' + error.message);
-            });
+    let routine_data = await model.findOne({ where: { UserId: userId } })
+    .catch(function (error) {
+        console.log('routineNotificationModel.findOne() occurs error：' + error.message);
+    });
+
+
+    
+    return routine_data;
 }
 
 /**
@@ -97,6 +122,12 @@ async function update(userId, time_interval = 900000, time_last_search = (Date.n
 
     routineRecord.time_interval = time_interval;
     routineRecord.time_last_search = time_last_search;
+
+    if( filtering_words.length > FILTERING_WORDS_NUM ){
+        let pop_num = filtering_words.length - FILTERING_WORDS_NUM;
+        for(let i = 0; i < pop_num; i = i+1)
+          filtering_words.pop();
+    }
 
     for(let i = 0; i < filtering_words.length; i = i+1)
       routineRecord[`filtering_word${i}`] = filtering_words[i];

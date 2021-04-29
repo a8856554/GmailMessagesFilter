@@ -189,12 +189,16 @@ async function sendEmail(auth, subject, from, to, context){
         .replace(/=+$/, '')
         ;
 
-    res = await gmail.users.messages.send({
-        userId: 'me',
-        requestBody: {
-          raw: encodedMessage,
-        },
-    });
+    res = await gmail.users.messages.send(
+                {
+                    userId: 'me',
+                    requestBody: {
+                        raw: encodedMessage,
+                    },
+                })
+                .catch(function (error) {
+                    console.log('gmailModel.sendEmail() returned an error: ' + error.message)
+                });;
     console.log(res.data);
     return res.data;
 }
@@ -246,9 +250,9 @@ async function sendEmail(auth, subject, from, to, context){
 async function getProfile(auth){
     const gmail = google.gmail({version: 'v1', auth});
     return gmail.users.getProfile({
-        auth: auth,
-        userId: 'me'
-        });
+                auth: auth,
+                userId: 'me'
+            });
 }
 
 /**
