@@ -18,6 +18,7 @@ async function gmailFilterService(){
     
     for(let i = 0; i < user_array.length; i = i+1){
         let user_id = user_array[i].UserId;
+        console.log(`This is user ${user_id} part.`);
         let gmailToken = {
             "access_token": user_array[i].access_token,
             "refresh_token": user_array[i].refresh_token,
@@ -28,13 +29,16 @@ async function gmailFilterService(){
 
         let filtering_words = element2array(user_array[i], 5);
         let oAuth2Client = await getOAuth2Client(user_id, gmailToken);
-        let message_array = await gmailModel.listMessages(oAuth2Client, 'label:INBOX ', filtering_words);
+        //let message_array = await gmailModel.listMessages(oAuth2Client, 'label:INBOX ', filtering_words);
+        let message_array = await gmailModel.listMessagesSpecificTime(
+                                    oAuth2Client, 
+                                    'label:INBOX ', 
+                                    filtering_words,
+                                    user_array[i].time_last_search
+                                );  
+        sequelizeDB["RoutineNotifications"].update(user_id, 900000, Date.now());
         sendNotification(user_id, oAuth2Client, message_array);
     }
-
-    
-    
-
 }
 
 /**
@@ -76,24 +80,23 @@ async function getOAuth2Client(userId, token){
  */
 async function sendNotification(userId, oAuth2Client, messages){
     
-        if(messages.length > 0){
-          //get the user's gmail address
-          let profile = await gmailModel.getProfile(oAuth2Client);
-          console.log('response is ' +  JSON.stringify(profile));
+    if(messages.length <= 0 || messages.length === undefined){
+        console.log('No mail you need.');
+        return;
+    }   
+    //get the user's gmail address
+    let profile = await gmailModel.getProfile(oAuth2Client);
+    console.log('response is ' +  JSON.stringify(profile));
   
-          gmailModel.sendEmail(oAuth2Client, 
-            'Gmail Filter notifications', 
-            profile.data.emailAddress,
-            profile.data.emailAddress,
-            messages
-          );
+    gmailModel.sendEmail(oAuth2Client, 
+        'Gmail Filter notifications', 
+        profile.data.emailAddress,
+        profile.data.emailAddress,
+        messages
+    );
          
-          sequelizeDB["UserMails"].create(messages,userId);
-          console.log(`Successfully send mails, user ${userId}`);  
-        }
-        else
-            console.log('No mail you need.');
-      
+    sequelizeDB["UserMails"].create(messages,userId);
+    console.log(`Successfully send mails, user ${userId}`);  
 }
 
 /**

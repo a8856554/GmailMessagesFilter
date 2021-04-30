@@ -6,15 +6,18 @@ if (!global.sequelizeDB) {
 }
 /* GET user's profile listing. */
 router.get('/', async function(req, res, next) {
+
   const userId = req.decoded.id;
   const user = await sequelizeDB["Users"].model.findByPk(userId);
   const user_routine = await sequelizeDB["RoutineNotifications"].find(userId);
   //send as a json object
   res.send({ user_profile: user , routine_data: user_routine});
+
 });
 
 /* create user's record in db table "RoutineNotifications". */ 
 router.post('/user_routine', async function(req, res, next) {
+  
   const userId = req.decoded.id;
   const {time_interval, time_last_search, filtering_words} = req.body;
   console.log(req.body);

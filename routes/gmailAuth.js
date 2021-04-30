@@ -23,84 +23,77 @@ if (!global.sequelizeDB) {
 
 /* GET authorization of user's gmail. */
 router.get('/', async function(req, res, next) {
-    filtering_word = ['蝴蝶','穀精','宮廷'];
-    let userId = req.decoded.id;
-    // Load client secrets from a local file.
-    // Use authorizeModel.authorize() to get a token.
-    let oAuth2Client = 
-    await readFileAsync('./resources/web_credentials.json')
-    .then(
-      //get gmail credentials and token successfully.
-      function (content){
-        return gmailAuthModel.authorize(JSON.parse(content), userId);  
-      },
-      // on rejection
-      function(reason) {
-        res.send('failed to get gmail credentials.');
-        return 'failed';
-      }
-    )
-    .then(
-      function (client){
-        //if client is a string means that we haven't got token yet
-        //sent Auth URL to front-end to let User get a new token.
-        if(typeof(client) === 'string'){
-          res.send(client);
-        }
-
-        //if client is not a string, then we get a setup oAuth2Client
-        return client;
-        
-      }
-    )
-    .catch(function (error) {
-        
-        console.log(error);
-        return res.status(500).send({
-          success: false,
-          message: error
-        })
-    });
-
+  filtering_word = ['蝴蝶','穀精','宮廷'];
+  let userId = req.decoded.id;
     
-    //Check if the user id exist in db.
-    await sequelizeDB["Users"].model.findByPk(userId)
-    .then(
-      //list mails which contain filtering words.
-      function (content){
-        return gmailModel.listMessages(oAuth2Client, 'label:INBOX subject:水草 ', filtering_word);  
-      },
-      // on rejection
-      function(reason) {
-        res.send('Find no your user data in database.');
-        return 'failed';
-      }
-    )
-    .then(async function (Messages) {
-      if(Messages.length > 0){
-        //get the user's gmail address
-        let profile = await gmailModel.getProfile(oAuth2Client);
-        console.log('response is ' +  JSON.stringify(profile));
-
-        gmailModel.sendEmail(oAuth2Client, 
-          'Gmail Filter notifications', 
-          /*'hsnuwindband52@gmail.com',
-          'hsnuwindband52@gmail.com',*/
-          profile.data.emailAddress,
-          profile.data.emailAddress,
-          Messages
-        );
-       
-        sequelizeDB["UserMails"].create(Messages,userId);
-        res.send('Successfully send mails.');  
-      }
-      else
-        res.send('No mail you need.');
+  let web_credentials;
+  try{
+    web_credentials = await readFileAsync('./resources/web_credentials.json');
+  }
+  catch(error) { 
+    console.log(error);
+    return res.status(500).send({
+        success: false,
+        message: `Can not find oAuth2 credentials ${error}`
     })
+  };
+
+  let oAuth2Client
+  try{
+    //get gmail credentials and token successfully.
+    oAuth2Client = await gmailAuthModel.authorize(JSON.parse(web_credentials), userId)
+  }
+  catch(error) { 
+    console.log(error);
+    return res.status(500).send({
+        success: false,
+        message: `Occurs error during setting oAuth2Client ${error}`
+    })
+  };
+
+  //if client is a string means that we haven't got token yet
+  //sent Auth URL to front-end to let User get a new token.
+  if(typeof(oAuth2Client) === 'string'){
+    res.send(oAuth2Client);
+  }
+
     
-    .catch(function (error) {
+  //Check if the user id exist in db.
+  await sequelizeDB["Users"].model.findByPk(userId)
+  .then(
+    //list mails which contain filtering words.
+    function (content){
+      return gmailModel.listMessages(oAuth2Client, 'label:INBOX subject:水草 ', filtering_word);  
+    },
+    // on rejection
+    function(reason) {
+      res.send('Find no your user data in database.');
+      return 'failed';
+    }
+  )
+  .then(async function (Messages) {
+    if(Messages.length > 0){
+        //get the user's gmail address
+      let profile = await gmailModel.getProfile(oAuth2Client);
+      console.log('response is ' +  JSON.stringify(profile));
+
+      gmailModel.sendEmail(oAuth2Client, 
+        'Gmail Filter notifications', 
+        profile.data.emailAddress,
+        profile.data.emailAddress,
+        Messages
+      );
+       
+      sequelizeDB["UserMails"].create(Messages,userId);
+      res.send('Successfully send mails.');  
+    }
+    else
+      res.send('No mail you need.');
+  })
+    
+  .catch(function (error) {
       return console.log(error);
-    });
+  });
 
 
 

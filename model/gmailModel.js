@@ -10,7 +10,8 @@ module.exports = {
     listMessages,
     getMessages,
     sendEmail,
-    getProfile
+    getProfile,
+    listMessagesSpecificTime
 };
 
 
@@ -278,6 +279,88 @@ async function readLastSearchTime(){
     .catch(function (error) {
         console.log('readLastSearchTime() returned an error: ' + error.message)
     });
-   
+}
+
+
+/**
+ * Lists the emails during a period by keywords, and return emails in Messages_array.
+ *
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * @param {string} query Gmail Search Query.
+ * @param {array} filtering_word array of key words
+ * @param {number} from_date search from. it can not be missed.
+ * @param {number} to_date search to. default is Date.now() in ms.
+ */
+async function listMessagesSpecificTime(auth, query, filtering_word = [], from_date = 0, to_date = Date.now()){ 
+    
+    if(from_date === 0 || from_date > to_date){
+        console.log("listMessagesSpecificTime(): date is not valid.");
+        return [];
+    }
+
+    let init_ts = Date.now();
+    Messages_array = [];
+    filtering_words = filtering_word;
+    //call gmail.users.messages.list() to get array of mail ids.
+    
+    const gmail = google.gmail({version: 'v1', auth});    
+    const keywords_query = `{ ${filtering_word.join(' ')} }`;
+
+
+    //turn ms to s.
+    const from = Math.round(from_date/ 1000);
+    const to = Math.round(to_date/ 1000);
+    console.log(`before:${to} after:${from} ${keywords_query} ${query}`);
+
+    //try to list gmail messages by api.
+    let response;
+    try{
+        response = await gmail.users.messages.list({        
+            userId: 'me',        
+            q: `before:${to} after:${from} ${keywords_query} ${query}`,      
+        });
+    }catch(error){ 
+        console.log(error);
+        return ;
+    };
+
+    //check if the messages exists.
+    let messages = response.data.messages; 
+    if (!response.data.messages) {           
+        messages = [];        
+    }                
+    
+    console.log(`listMessages() lists ${messages.length} mails.`);
+    console.log(messages);
+
+    let id_array = messages.map(item => item.id);
+
+    // Iterate each messages[i], and use getMessages() to get the mail according message id.
+    let promise_array = [];
+    for(let i = 0; i < id_array.length; i++){
+        promise_array.push(getMessages(auth, id_array[i]));
+    }
+    //Use Promise.all() to wait all getMessages() done.
+    return Promise.all(promise_array)
+    .then(//this then will be executed after all promises in Promise.all(promise_array) being resolved.
+        function (fulfilled) {
+            //console.log(Messages_array);
+            let completed_ts = new Date(Date.now());
+            // timestamp in milliseconds
+            console.log('listMessages() is Completed at '
+                + `${completed_ts.getFullYear()}-`
+                + `${(completed_ts.getMonth() + 1 ).toString().padStart(2, '0')}-`
+                + `${completed_ts.getDate().toString().padStart(2, '0')} `
+                + `${completed_ts.getHours().toString().padStart(2, '0')}:`
+                + `${completed_ts.getMinutes().toString().padStart(2, '0')}:`
+                + `${completed_ts.getSeconds().toString().padStart(2, '0')}:`
+                +`${completed_ts % 1000}`
+            );
+            console.log('listMessages() used ' + Math.abs(completed_ts - init_ts) + ' ms.');
+            return Messages_array ;
+        }
+    ).catch(function (error) {
+        console.log('listMessages returned an error: ' + error.message)
+    });
     
 }
