@@ -29,7 +29,7 @@ async function gmailFilterService(){
 
         let filtering_words = element2array(user_array[i], 5);
         let oAuth2Client = await getOAuth2Client(user_id, gmailToken);
-        //let message_array = await gmailModel.listMessages(oAuth2Client, 'label:INBOX ', filtering_words);
+        /////////////////////////////////////this part can be moved into Promise.all()
         let message_array = await gmailModel.listMessagesSpecificTime(
                                     oAuth2Client, 
                                     'label:INBOX ', 
@@ -38,6 +38,7 @@ async function gmailFilterService(){
                                 );  
         sequelizeDB["RoutineNotifications"].update(user_id, 900000, Date.now());
         sendNotification(user_id, oAuth2Client, message_array);
+        /////////////////////////////////////
     }
 }
 

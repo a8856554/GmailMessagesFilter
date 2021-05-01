@@ -19,7 +19,8 @@ if (!global.sequelizeDB) {
 module.exports = {
     authorize,
     getNewToken,
-    getToken
+    getToken,
+    useRefreshToken
 };
 
 
@@ -118,8 +119,22 @@ function getNewToken(oAuth2Client) {
 * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
 * @param {string} code The code google oAuth2 redirected to user.
 */
-// TODO : function authorize needs to be promisified.
 async function getToken(oAuth2Client, code) {
   return  oAuth2Client.getToken(code);
+}
+
+/**
+* Use refresh token to get a new google oAuth2 access token.
+* @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
+* @param {string} refreshToken The google oAuth2 refresh token.
+*/
+async function useRefreshToken(oAuth2Client, refreshToken) {
+  //console.log(`before: ${JSON.stringify(oAuth2Client)}`);
+  oAuth2Client.setCredentials({
+    refresh_token: refreshToken
+  });
+  await oAuth2Client.getAccessToken();
+  //console.log(`after: ${JSON.stringify(oAuth2Client)}`);
+  return  oAuth2Client.credentials.access_token;
 }
   

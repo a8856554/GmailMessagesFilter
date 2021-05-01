@@ -6,6 +6,7 @@ module.exports = {
   init,
   find,
   findAll,
+  update,
   model,
   name
 };
@@ -93,4 +94,21 @@ async function create(access_token, refresh_token, scope, token_type, expiry_dat
     .catch(function (error) {
         console.log('GmailTokens.findAll() occurs error：' + error.message);
     });
+}
+
+/**
+ * update a token record in table  "GmailTokens"
+ *
+ * @param {number} userId User's id 
+ * @param {string} access_token a new access token 
+ */
+ async function update(userId, access_token = null){
+    let token_record = await find(userId);
+    if(access_token !== null)
+        token_record.access_token = access_token;
+    await token_record.save()
+            .catch(function (error) {
+                console.log('gmailTokenModel.update() occurs error：' + error.message);
+            });
+    return token_record;
 }
