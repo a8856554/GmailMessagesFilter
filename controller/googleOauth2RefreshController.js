@@ -26,10 +26,8 @@ async function googleOauth2Refresh(){
 }
 
 /**
- * Get a oAuth2Client which has been set credentials and google auth2 token.
+ * Get a oAuth2Client which has been set credentials but no google auth2 token.
  * if there is error during reading credentials , return a error log.
- * @param {number} userId User's id 
- * @param {Object} token option: a json oAuth2 token object
  */
  async function getOAuth2ClientWithoutToken(){
   let oAuth2Client = await readFileAsync('./resources/web_credentials.json')

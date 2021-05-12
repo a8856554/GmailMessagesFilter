@@ -1,12 +1,18 @@
 const { Sequelize, DataTypes, Model, Deferrable } = require('sequelize');
+const pgp = require('pg-promise')();
 let model;
 const name = 'GmailTokens';
+if (!global.db) {
+    db = pgp(process.env.DB_URL);
+    console.log('get db url again...');
+}
 module.exports = {
   create,
   init,
   find,
   findAll,
   update,
+  deleteToken,
   model,
   name
 };
@@ -111,4 +117,18 @@ async function create(access_token, refresh_token, scope, token_type, expiry_dat
                 console.log('gmailTokenModel.update() occurs error：' + error.message);
             });
     return token_record;
+}
+
+/**
+ * delete a token record with UserId in table "GmailTokens".
+ *
+ * @param {number} userId User's id 
+ */
+ async function deleteToken(userId){
+
+    const sql = `
+        DELETE FROM "GmailTokens" WHERE "UserId" = $1
+        RETURNING *;
+    `;
+  return db.any(sql, userId);
 }
